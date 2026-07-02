@@ -35,6 +35,57 @@ First launch creates your local account. Data lives in `~/.oilforge/`
    **double-entry journal CSV** (DR/CR accounts for every draw, contribution
    and declaration).
 
+## T2 preparation & year-end close
+
+The **Reports → T2 year-end** tab builds the working papers:
+
+- **Schedule 1** book-to-tax reconciliation (automatic add-back of the
+  non-deductible 50% of meals, CCA deduction)
+- **Schedule 8** CCA in T2 layout (CSV export)
+- **Schedule 50** shareholder information (holdings, dividends, loans)
+- **Schedule 125** GIFI-coded income statement (CSV export)
+- **Retained-earnings reconciliation** and a suggested **tax provision
+  journal entry** (DR Income Tax Expense / CR Income Taxes Payable)
+- **Close fiscal year** snapshots the figures (audit-logged) and rolls
+  closing RE into next year's opening RE
+
+## Personal Tax Bridge
+
+The corporate numbers flow into a **T1 preview** for the owner: dividends
+(grossed up, with federal + Alberta dividend tax credits), the ITA 80.4
+imputed-interest benefit on any outstanding loan, plus manually entered
+employment/other income and RRSP/other deductions. Shows federal and
+provincial tax, marginal/average rates, a simplified **2024+ AMT check**,
+and the **combined corporate + personal** effective rate on each dollar of
+corporate income. Preview only — brackets are simplified (no CPP/EI or
+clawbacks); the accountant files the real T1.
+
+## GST/HST filing detail
+
+**Reports → GST/HST filing**: ITCs split **operating vs capital property**
+(equipment acquisitions listed individually), per-category and quarterly
+breakdowns, a memo of GST embedded in unreleased holdbacks, RC4616
+closely-related-election recording, and a filing-ready CSV export.
+
+## Field operations
+
+- **Field Entry page** — mobile-first ticket entry with big touch targets,
+  **camera photo attachments** on tickets, and an **offline queue**:
+  entries made without signal are stored locally and auto-sync when the
+  network returns.
+- **Parts inventory** (Equipment → Parts): stock levels, unit costs,
+  low-stock flags, one-tap receive/use.
+- **Safety & compliance registry** (Equipment → Safety): certificates,
+  inspections, permits with expiry countdown badges.
+
+## Accountant handoff
+
+One click (**Reports → Accountant package**) downloads a ZIP containing the
+financial summary PDF, complete T2 working papers, GST filing summary,
+double-entry shareholder journal, T5 figures per shareholder, and the full
+audit log. CSV **import tools** (with downloadable templates) cover
+expenses, clients and equipment for migrating old records.
+
 ## Everything else
 
 | Area | Features |
@@ -71,9 +122,20 @@ app's job is clean records and audit-ready exports (keep 6+ years).
 ```bash
 cd backend && uvicorn oilforge.main:app --reload --port 8899   # API
 cd frontend && npm install && npm run dev                      # UI :5173
-cd backend && python -m pytest tests                           # 30 tests
+cd backend && python -m pytest tests                           # 51 tests
 cd frontend && npm run build                                   # ship UI
 ```
+
+## Security
+
+- Local auth (PBKDF2, 260k iterations) with **login rate limiting**
+  (5 failures → 5-minute lockout).
+- **Encrypted backups** (PBKDF2 + Fernet) via a password on export.
+- Attachments are type- and size-restricted (photos/PDF, 15 MB).
+- Append-only audit log with **CSV export** for the reviewer.
+- Full-database encryption at rest: keep `~/.oilforge` on an encrypted
+  volume (FileVault/BitLocker/LUKS) — SQLCipher can be swapped in via
+  `DATABASE_URL` if needed.
 
 ## Packaging
 

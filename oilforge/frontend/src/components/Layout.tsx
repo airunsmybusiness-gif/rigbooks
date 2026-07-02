@@ -1,9 +1,9 @@
 /** App shell: sidebar nav, top bar with fiscal-period picker + theme toggle.
  * Collapses to a slide-over below lg for field use. */
 import {
-  Banknote, BookOpenText, Calendar, FileSpreadsheet, Hammer, Landmark,
-  LayoutDashboard, LogOut, Menu, Moon, Receipt, Settings2, Sun, Truck,
-  Users, Wallet, X,
+  Banknote, BookOpenText, Calendar, ClipboardPen, FileSpreadsheet, Hammer,
+  Landmark, LayoutDashboard, LogOut, Menu, Moon, Receipt, Settings2, Sun,
+  Truck, UserRound, Wallet, X,
 } from "lucide-react";
 import { useState } from "react";
 import { NavLink, Outlet } from "react-router-dom";
@@ -14,10 +14,12 @@ const NAV = [
   { to: "/", label: "Dashboard", icon: LayoutDashboard },
   { to: "/transactions", label: "Bank Import", icon: Landmark },
   { to: "/jobs", label: "Jobs & Field Tickets", icon: Hammer },
+  { to: "/field", label: "Field Entry", icon: ClipboardPen },
   { to: "/invoices", label: "Invoices", icon: Receipt },
   { to: "/expenses", label: "Expenses", icon: Wallet },
   { to: "/equipment", label: "Equipment & CCA", icon: Truck },
   { to: "/shareholder", label: "Dividends & Loans", icon: Banknote },
+  { to: "/personal-tax", label: "Personal Tax Bridge", icon: UserRound },
   { to: "/reports", label: "Reports & Exports", icon: FileSpreadsheet },
   { to: "/tax-rules", label: "Tax Rules", icon: BookOpenText },
   { to: "/settings", label: "Settings", icon: Settings2 },

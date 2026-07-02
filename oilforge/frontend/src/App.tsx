@@ -2,10 +2,12 @@ import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
 import Layout from "./components/Layout";
 import Dashboard from "./pages/Dashboard";
 import EquipmentPage from "./pages/Equipment";
+import FieldEntry from "./pages/Field";
 import Expenses from "./pages/Expenses";
 import Invoices from "./pages/Invoices";
 import Jobs from "./pages/Jobs";
 import Login from "./pages/Login";
+import PersonalTax from "./pages/PersonalTax";
 import Reports from "./pages/Reports";
 import Settings from "./pages/Settings";
 import ShareholderPage from "./pages/Shareholder";
@@ -23,10 +25,12 @@ export default function App() {
           <Route path="/" element={<Dashboard />} />
           <Route path="/transactions" element={<Transactions />} />
           <Route path="/jobs" element={<Jobs />} />
+          <Route path="/field" element={<FieldEntry />} />
           <Route path="/invoices" element={<Invoices />} />
           <Route path="/expenses" element={<Expenses />} />
           <Route path="/equipment" element={<EquipmentPage />} />
           <Route path="/shareholder" element={<ShareholderPage />} />
+          <Route path="/personal-tax" element={<PersonalTax />} />
           <Route path="/reports" element={<Reports />} />
           <Route path="/tax-rules" element={<TaxRules />} />
           <Route path="/settings" element={<Settings />} />

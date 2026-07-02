@@ -145,6 +145,10 @@ export default function ShareholderPage() {
           </Card>
 
           {selected != null && <T5Card shareholderId={selected} year={year} />}
+          {selected != null && <YearlyCard shareholderId={selected} />}
+          {current?.assessment.owing_to_corp && selected != null && (
+            <PlannerCard shareholderId={selected} />
+          )}
         </>
       )}
 
@@ -197,6 +201,68 @@ function T5Card({ shareholderId, year }: { shareholderId: number; year: number }
         for income taxed at the small-business rate — confirm eligible
         designations (GRIP) with your accountant.
       </p>
+    </Card>
+  );
+}
+
+function YearlyCard({ shareholderId }: { shareholderId: number }) {
+  const [data, setData] = useState<any>(null);
+  useEffect(() => {
+    api.get(`/api/shareholder/${shareholderId}/yearly`).then(setData);
+  }, [shareholderId]);
+  if (!data || !data.years?.length) return null;
+  return (
+    <Card title="Multi-year history — balance at each fiscal year-end">
+      <Table head={<>
+        <Th>Year</Th><Th right>Balance at FYE</Th><Th>15(2) deadline</Th>
+        <Th>Status</Th><Th right>Dividends</Th>
+      </>}>
+        {data.years.map((y: any) => (
+          <tr key={y.year}>
+            <Td>{y.year}</Td>
+            <Td right>{money(y.balance_at_fye)}</Td>
+            <Td className="text-xs">{y.repayment_deadline}</Td>
+            <Td>{y.ita_15_2_ok
+              ? <Badge tone="good">clear</Badge>
+              : <Badge tone="bad">15(2) risk</Badge>}</Td>
+            <Td right>{money((y.dividends.eligible ?? 0) + (y.dividends.non_eligible ?? 0))}</Td>
+          </tr>
+        ))}
+      </Table>
+    </Card>
+  );
+}
+
+function PlannerCard({ shareholderId }: { shareholderId: number }) {
+  const [plan, setPlan] = useState<any>(null);
+  useEffect(() => {
+    api.get(`/api/shareholder/${shareholderId}/repayment-plan`).then(setPlan);
+  }, [shareholderId]);
+  if (!plan || plan.balance <= 0) return null;
+  return (
+    <Card title="Repayment planner — clearing the loan before the ITA 15(2) deadline">
+      <div className="grid grid-cols-2 gap-4 text-sm md:grid-cols-4">
+        <div>
+          <p className="text-xs uppercase tracking-wide text-ink-3">Deadline</p>
+          <p className="font-semibold">{plan.repayment_deadline}</p>
+        </div>
+        <div>
+          <p className="text-xs uppercase tracking-wide text-ink-3">Monthly to clear</p>
+          <p className="font-semibold">{money(plan.monthly_repayment_to_clear)}
+            <span className="text-xs text-ink-3"> × {plan.months_remaining} mo</span></p>
+        </div>
+        <div>
+          <p className="text-xs uppercase tracking-wide text-ink-3">Dividend to clear now</p>
+          <p className="font-semibold">{money(plan.dividend_to_clear_now)}</p>
+        </div>
+        <div>
+          <p className="text-xs uppercase tracking-wide text-ink-3">80.4 interest if held</p>
+          <p className="font-semibold">{money(plan.estimated_80_4_interest_if_held_to_deadline)}</p>
+        </div>
+      </div>
+      <ul className="mt-3 list-inside list-disc text-xs text-ink-3">
+        {plan.options.map((o: string) => <li key={o}>{o}</li>)}
+      </ul>
     </Card>
   );
 }
