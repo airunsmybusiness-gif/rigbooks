@@ -1,0 +1,86 @@
+@import "tailwindcss";
+
+/* Dark mode is class-driven (persisted toggle). */
+@custom-variant dark (&:where(.dark, .dark *));
+
+/* OilForge design tokens — forge-ember accent on warm neutral surfaces;
+   chart series use the validated dataviz palette. */
+:root {
+  --surface-1: #fcfcfb;
+  --surface-2: #f9f8f6;
+  --ink-1: #0d0c0b;
+  --ink-2: #55524d;
+  --ink-3: #8a867e;
+  --grid: #e3e1da;
+  --axis: #c6c3ba;
+  --border: rgba(13, 12, 11, 0.1);
+  --series-1: #2a78d6;
+  --series-2: #1baf7a;
+  --series-3: #eda100;
+  --series-4: #008300;
+  --series-5: #4a3aa7;
+  --series-6: #e34948;
+  --series-7: #e87ba4;
+  --series-8: #eb6834;
+  --good: #006300;
+  --bad: #d03b3b;
+  --accent: #d4560f;        /* forge ember */
+  --accent-soft: #fbe4d4;
+}
+.dark {
+  --surface-1: #1b1917;
+  --surface-2: #0d0c0b;
+  --ink-1: #ffffff;
+  --ink-2: #c7c3ba;
+  --ink-3: #8a867e;
+  --grid: #2d2b27;
+  --axis: #3a3733;
+  --border: rgba(255, 255, 255, 0.1);
+  --series-1: #3987e5;
+  --series-2: #199e70;
+  --series-3: #c98500;
+  --series-4: #008300;
+  --series-5: #9085e9;
+  --series-6: #e66767;
+  --series-7: #d55181;
+  --series-8: #d95926;
+  --good: #0ca30c;
+  --bad: #e66767;
+  --accent: #e86a2e;
+  --accent-soft: #46200c;
+}
+
+@theme inline {
+  --color-surface-1: var(--surface-1);
+  --color-surface-2: var(--surface-2);
+  --color-ink-1: var(--ink-1);
+  --color-ink-2: var(--ink-2);
+  --color-ink-3: var(--ink-3);
+  --color-grid: var(--grid);
+  --color-axis: var(--axis);
+  --color-line: var(--border);
+  --color-accent: var(--accent);
+  --color-accent-soft: var(--accent-soft);
+  --color-good: var(--good);
+  --color-bad: var(--bad);
+}
+
+html, body, #root { height: 100%; }
+body {
+  background: var(--surface-2);
+  color: var(--ink-1);
+  font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+::selection { background: var(--accent-soft); }
+* { scrollbar-width: thin; scrollbar-color: var(--axis) transparent; }
+
+input[type="number"]::-webkit-outer-spin-button,
+input[type="number"]::-webkit-inner-spin-button { -webkit-appearance: none; }
+
+@keyframes fade-up {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.fade-up { animation: fade-up 0.25s ease-out both; }
