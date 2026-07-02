@@ -1,4 +1,8 @@
-"""Local auth: first registered user bootstraps the app."""
+"""Local auth: first registered user bootstraps the app. Login attempts
+are rate-limited (5 failures -> 5-minute lockout per email)."""
+import time
+from collections import defaultdict
+
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, EmailStr
 from sqlalchemy.orm import Session
@@ -37,11 +41,23 @@ def register(creds: Credentials, db: Session = Depends(get_db)):
     return {"token": create_token(user.id), "name": user.name, "email": user.email}
 
 
+_FAILED: dict[str, list[float]] = defaultdict(list)
+_LOCKOUT_AFTER = 5
+_LOCKOUT_WINDOW = 300  # seconds
+
+
 @router.post("/login")
 def login(creds: Credentials, db: Session = Depends(get_db)):
-    user = db.query(User).filter(User.email == creds.email.lower()).first()
+    key = creds.email.lower()
+    now = time.time()
+    _FAILED[key] = [t for t in _FAILED[key] if now - t < _LOCKOUT_WINDOW]
+    if len(_FAILED[key]) >= _LOCKOUT_AFTER:
+        raise HTTPException(429, "Too many failed attempts - try again in a few minutes")
+    user = db.query(User).filter(User.email == key).first()
     if user is None or not verify_password(creds.password, user.password_hash):
+        _FAILED[key].append(now)
         raise HTTPException(401, "Invalid email or password")
+    _FAILED.pop(key, None)
     log(db, user.email, "login", "users", user.id)
     db.commit()
     return {"token": create_token(user.id), "name": user.name, "email": user.email}

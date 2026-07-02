@@ -195,3 +195,29 @@ async def migration_import(file: UploadFile, source: str = "generic",
             "preview": first_lines,
             "note": "Migration mapping not implemented yet - use Bank Import "
                     "for statements or the backup/restore JSON format."}
+
+
+# ------------------------------------------------------ GST filing detail
+
+from ..reports import gst_detail as _gst_detail  # noqa: E402
+
+
+@router.get("/gst-filing")
+def gst_filing(start: str | None = None, end: str | None = None,
+               db: Session = Depends(get_db), user: User = Depends(current_user)):
+    s, e = parse_period(db, start, end)
+    return _gst_detail.filing_summary(db, s, e)
+
+
+@router.get("/gst-filing.csv")
+def gst_filing_csv(start: str | None = None, end: str | None = None,
+                   db: Session = Depends(get_db),
+                   user: User = Depends(current_user)):
+    s, e = parse_period(db, start, end)
+    summary = _gst_detail.filing_summary(db, s, e)
+    log(db, user.email, "export", "gst_filing", "",
+        {"period": [s.isoformat(), e.isoformat()]})
+    db.commit()
+    return Response(_gst_detail.filing_csv(summary), media_type="text/csv",
+                    headers={"Content-Disposition":
+                             f'attachment; filename="GST_Filing_{e.year}.csv"'})

@@ -18,7 +18,8 @@
       "NL": 0.15,
       "NS": 0.14,
       "PE": 0.15
-    }
+    },
+    "rc4616_notes": "RC4616: closely related corporations can elect to treat certain intercompany supplies as made for nil consideration. Record the election in Settings if made."
   },
   "corporate_tax": {
     "federal_small_business_rate": 0.09,
@@ -161,5 +162,112 @@
     "safety_gear_notes": "PPE required for site access (FR clothing, H2S monitors, boots) is 100% deductible.",
     "remote_work_notes": "Travel to special/remote work sites, lodging and reasonable allowances are deductible - keep site tickets as support."
   },
-  "records_retention_years": 6
+  "records_retention_years": 6,
+  "personal_tax": {
+    "federal_brackets": [
+      [
+        57375,
+        0.15
+      ],
+      [
+        114750,
+        0.205
+      ],
+      [
+        177882,
+        0.26
+      ],
+      [
+        253414,
+        0.29
+      ],
+      [
+        null,
+        0.33
+      ]
+    ],
+    "federal_bpa": 16129,
+    "provincial": {
+      "AB": {
+        "brackets": [
+          [
+            60000,
+            0.08
+          ],
+          [
+            151234,
+            0.1
+          ],
+          [
+            181481,
+            0.12
+          ],
+          [
+            241974,
+            0.13
+          ],
+          [
+            362961,
+            0.14
+          ],
+          [
+            null,
+            0.15
+          ]
+        ],
+        "bpa": 22323,
+        "dtc_of_taxable": {
+          "eligible": 0.0812,
+          "non_eligible": 0.0218
+        }
+      }
+    },
+    "amt": {
+      "rate": 0.205,
+      "exemption": 177882,
+      "credit_allowance": 0.5,
+      "notes": "Simplified 2024+ AMT: dividends at actual amount (no gross-up), 50% of non-refundable credits allowed. Preview only."
+    },
+    "notes": "T1 PREVIEW ONLY - brackets/credits simplified (no CPP/EI, no clawbacks). AB adds the new 8% bracket for 2025."
+  },
+  "gifi": {
+    "revenue": {
+      "Revenue - Contract Services": "8000"
+    },
+    "expenses": {
+      "Subcontractors": "8360",
+      "Fuel & Petroleum": "9224",
+      "Equipment Rental": "8914",
+      "Equipment Repairs & Parts": "8960",
+      "Shop Supplies": "8811",
+      "Small Tools (<$500)": "8960",
+      "Safety Gear & PPE": "9270",
+      "Camp & Accommodation": "9200",
+      "Meals (50%)": "8523",
+      "Travel": "9200",
+      "Insurance - Commercial": "8690",
+      "Insurance - Equipment": "8690",
+      "WCB Premiums": "9130",
+      "Professional Fees": "8860",
+      "Office & Admin": "8810",
+      "Phone & Communications": "9225",
+      "Software & Subscriptions": "8810",
+      "Bank Fees": "8715",
+      "Interest & Loan Charges": "8710",
+      "Utilities - Shop": "9220",
+      "Rent - Shop/Yard": "8910",
+      "Licenses & Permits": "8760",
+      "Training & Certifications": "8810",
+      "Marketing": "8520",
+      "Other Operating": "9270",
+      "CCA": "8670"
+    },
+    "notes": "Default GIFI mapping for Schedule 125 - accountant may remap."
+  },
+  "t2": {
+    "schedule1_addbacks": {
+      "Meals (50%)": 0.5
+    },
+    "notes": "Schedule 1 adds back the non-deductible portion of listed categories (ITA 67.1 meals 50%)."
+  }
 }
