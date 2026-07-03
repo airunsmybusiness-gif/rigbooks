@@ -67,8 +67,11 @@ class BankTransaction(Base, TimestampMixin):
     status: Mapped[str] = mapped_column(String(16), default="business")
     itc: Mapped[float] = mapped_column(Float, default=0.0)
     source_file: Mapped[str] = mapped_column(String(255), default="")
+    receipt_ref: Mapped[str] = mapped_column(String(255), default="")
     posted_shareholder_txn_id: Mapped[int | None] = mapped_column(
         ForeignKey("shareholder_txns.id"), nullable=True)
+    split_parent_id: Mapped[int | None] = mapped_column(
+        ForeignKey("bank_transactions.id"), nullable=True)
     notes: Mapped[str] = mapped_column(Text, default="")
 
 

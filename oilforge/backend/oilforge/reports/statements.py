@@ -81,10 +81,12 @@ def collect(db: Session, start: date, end: date) -> dict:
 
     total_expenses = round(bank_expenses + direct_expenses + maint_cost, 2)
 
-    # ---- CCA & income ----------------------------------------------------
+    # ---- CCA & income (book -> tax via Schedule 1) -----------------------
     cca = cca_for_year(db, year)
     ebitda = round(invoiced_revenue - total_expenses, 2)
-    income_before_tax = round(ebitda - cca["total_cca"], 2)
+    s1 = cra.schedule1(ebitda, dict(expense_by_category), cca["total_cca"],
+                       cca["total_recapture"], cca["total_terminal_loss"], rules)
+    income_before_tax = s1["net_income_for_tax"]
     tax_est = cra.corporate_tax_estimate(income_before_tax, rules, province)
 
     # ---- Shareholder & dividends ----------------------------------------
@@ -123,7 +125,10 @@ def collect(db: Session, start: date, end: date) -> dict:
         },
         "itcs": round(itcs, 2),
         "gst34": cra.gst_return(invoiced_revenue, gst_collected, itcs),
-        "cca": {"total": cca["total_cca"], "ucc_closing": cca["total_ucc_closing"]},
+        "cca": {"total": cca["total_cca"], "ucc_closing": cca["total_ucc_closing"],
+                "recapture": cca["total_recapture"],
+                "terminal_loss": cca["total_terminal_loss"]},
+        "schedule1": s1,
         "income": {
             "ebitda": ebitda,
             "cca": cca["total_cca"],

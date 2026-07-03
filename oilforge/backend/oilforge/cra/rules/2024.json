@@ -5,9 +5,19 @@
   "gst_hst": {
     "registration_threshold": 30000,
     "rates": {
-      "AB": 0.05, "BC": 0.05, "SK": 0.05, "MB": 0.05, "QC": 0.05,
-      "YT": 0.05, "NT": 0.05, "NU": 0.05,
-      "ON": 0.13, "NB": 0.15, "NL": 0.15, "NS": 0.15, "PE": 0.15
+      "AB": 0.05,
+      "BC": 0.05,
+      "SK": 0.05,
+      "MB": 0.05,
+      "QC": 0.05,
+      "YT": 0.05,
+      "NT": 0.05,
+      "NU": 0.05,
+      "ON": 0.13,
+      "NB": 0.15,
+      "NL": 0.15,
+      "NS": 0.15,
+      "PE": 0.15
     }
   },
   "corporate_tax": {
@@ -15,23 +25,52 @@
     "federal_general_rate": 0.15,
     "small_business_limit": 500000,
     "provincial_rates": {
-      "AB": {"small": 0.02, "general": 0.08},
-      "BC": {"small": 0.02, "general": 0.12},
-      "SK": {"small": 0.01, "general": 0.12},
-      "ON": {"small": 0.032, "general": 0.115},
-      "MB": {"small": 0.0, "general": 0.12}
+      "AB": {
+        "small": 0.02,
+        "general": 0.08
+      },
+      "BC": {
+        "small": 0.02,
+        "general": 0.12
+      },
+      "SK": {
+        "small": 0.01,
+        "general": 0.12
+      },
+      "ON": {
+        "small": 0.032,
+        "general": 0.115
+      },
+      "MB": {
+        "small": 0.0,
+        "general": 0.12
+      }
     },
     "notes": "Estimates only - passive income grinds and associated-corp sharing of the SBD limit are the accountant's call."
   },
   "dividends": {
-    "non_eligible": {"gross_up": 0.15, "federal_dtc_of_taxable": 0.090301},
-    "eligible": {"gross_up": 0.38, "federal_dtc_of_taxable": 0.150198},
+    "non_eligible": {
+      "gross_up": 0.15,
+      "federal_dtc_of_taxable": 0.090301
+    },
+    "eligible": {
+      "gross_up": 0.38,
+      "federal_dtc_of_taxable": 0.150198
+    },
     "notes": "Non-eligible = paid from income taxed at the small-business rate (the normal case for an owner-operator CCPC). Eligible requires GRIP balance - confirm with the accountant before declaring."
   },
   "t5": {
     "boxes": {
-      "non_eligible": {"actual": "10", "taxable": "11", "dtc": "12"},
-      "eligible": {"actual": "24", "taxable": "25", "dtc": "26"}
+      "non_eligible": {
+        "actual": "10",
+        "taxable": "11",
+        "dtc": "12"
+      },
+      "eligible": {
+        "actual": "24",
+        "taxable": "25",
+        "dtc": "26"
+      }
     },
     "filing_deadline": "Last day of February following the calendar year of payment"
   },
@@ -42,33 +81,77 @@
   },
   "cca": {
     "classes": {
-      "8": {"rate": 0.20, "description": "General equipment, furniture, tools >= $500"},
-      "10": {"rate": 0.30, "description": "Trucks, vans, trailers, general vehicles"},
-      "10.1": {"rate": 0.30, "description": "Passenger vehicles over the cost cap"},
-      "12": {"rate": 1.00, "description": "Small tools < $500, software (non-systems)"},
-      "16": {"rate": 0.40, "description": "Heavy freight trucks > 11,788 kg GVWR"},
-      "38": {"rate": 0.30, "description": "Power-operated movable equipment (excavation, moving)"},
-      "43": {"rate": 0.30, "description": "Manufacturing & processing machinery"},
-      "46": {"rate": 0.30, "description": "Network / data equipment"},
-      "50": {"rate": 0.55, "description": "Computers & systems software"},
-      "53": {"rate": 0.50, "description": "M&P machinery acquired 2016-2025"}
+      "8": {
+        "rate": 0.2,
+        "description": "General equipment, furniture, tools >= $500"
+      },
+      "10": {
+        "rate": 0.3,
+        "description": "Trucks, vans, trailers, general vehicles"
+      },
+      "10.1": {
+        "rate": 0.3,
+        "description": "Passenger vehicles over the cost cap"
+      },
+      "12": {
+        "rate": 1.0,
+        "description": "Small tools < $500, software (non-systems)"
+      },
+      "16": {
+        "rate": 0.4,
+        "description": "Heavy freight trucks > 11,788 kg GVWR"
+      },
+      "38": {
+        "rate": 0.3,
+        "description": "Power-operated movable equipment (excavation, moving)"
+      },
+      "43": {
+        "rate": 0.3,
+        "description": "Manufacturing & processing machinery"
+      },
+      "46": {
+        "rate": 0.3,
+        "description": "Network / data equipment"
+      },
+      "50": {
+        "rate": 0.55,
+        "description": "Computers & systems software"
+      },
+      "53": {
+        "rate": 0.5,
+        "description": "M&P machinery acquired 2016-2025"
+      }
     },
     "first_year_multiplier": 1.5,
     "passenger_vehicle_cost_cap": 37000,
     "notes": "first_year_multiplier 1.5 = Accelerated Investment Incentive on net additions (phases out after 2027; was immediate expensing for CCPCs before 2024). Set to 0.5 to model the plain half-year rule."
   },
   "itc_category_rates": {
-    "Subcontractors": 1.0, "Fuel & Petroleum": 1.0, "Equipment Rental": 1.0,
-    "Equipment Repairs & Parts": 1.0, "Shop Supplies": 1.0,
-    "Small Tools (<$500)": 1.0, "Safety Gear & PPE": 1.0,
-    "Camp & Accommodation": 1.0, "Meals (50%)": 0.5, "Travel": 1.0,
-    "Professional Fees": 1.0, "Office & Admin": 1.0,
-    "Phone & Communications": 1.0, "Software & Subscriptions": 1.0,
-    "Utilities - Shop": 1.0, "Rent - Shop/Yard": 1.0,
-    "Training & Certifications": 1.0, "Marketing": 1.0,
-    "Capital Asset Purchase": 1.0, "Other Operating": 1.0,
-    "Insurance - Commercial": 0.0, "Insurance - Equipment": 0.0,
-    "WCB Premiums": 0.0, "Bank Fees": 0.0, "Interest & Loan Charges": 0.0,
+    "Subcontractors": 1.0,
+    "Fuel & Petroleum": 1.0,
+    "Equipment Rental": 1.0,
+    "Equipment Repairs & Parts": 1.0,
+    "Shop Supplies": 1.0,
+    "Small Tools (<$500)": 1.0,
+    "Safety Gear & PPE": 1.0,
+    "Camp & Accommodation": 1.0,
+    "Meals (50%)": 0.5,
+    "Travel": 1.0,
+    "Professional Fees": 1.0,
+    "Office & Admin": 1.0,
+    "Phone & Communications": 1.0,
+    "Software & Subscriptions": 1.0,
+    "Utilities - Shop": 1.0,
+    "Rent - Shop/Yard": 1.0,
+    "Training & Certifications": 1.0,
+    "Marketing": 1.0,
+    "Capital Asset Purchase": 1.0,
+    "Other Operating": 1.0,
+    "Insurance - Commercial": 0.0,
+    "Insurance - Equipment": 0.0,
+    "WCB Premiums": 0.0,
+    "Bank Fees": 0.0,
+    "Interest & Loan Charges": 0.0,
     "Licenses & Permits": 0.0
   },
   "oilfield_deductions": {
@@ -78,5 +161,80 @@
     "safety_gear_notes": "PPE required for site access (FR clothing, H2S monitors, boots) is 100% deductible.",
     "remote_work_notes": "Travel to special/remote work sites, lodging and reasonable allowances are deductible - keep site tickets as support."
   },
-  "records_retention_years": 6
+  "records_retention_years": 6,
+  "personal_tax": {
+    "federal_brackets": [
+      [
+        0,
+        0.15
+      ],
+      [
+        55867,
+        0.205
+      ],
+      [
+        111733,
+        0.26
+      ],
+      [
+        173205,
+        0.29
+      ],
+      [
+        246752,
+        0.33
+      ]
+    ],
+    "federal_basic_personal_amount": 15705,
+    "provincial_brackets": {
+      "AB": [
+        [
+          0,
+          0.1
+        ],
+        [
+          148269,
+          0.12
+        ],
+        [
+          177922,
+          0.13
+        ],
+        [
+          237230,
+          0.14
+        ],
+        [
+          355845,
+          0.15
+        ]
+      ]
+    },
+    "provincial_basic_personal_amount": {
+      "AB": 21885
+    },
+    "dtc_of_taxable": {
+      "federal": {
+        "eligible": 0.150198,
+        "non_eligible": 0.090301
+      },
+      "AB": {
+        "eligible": 0.0812,
+        "non_eligible": 0.0218
+      }
+    },
+    "amt_exemption": 173205,
+    "notes": "Estimates only. AMT (revamped 2024) can apply with large eligible dividends/capital gains; TOSI restricts sprinkling to family members not active in the business."
+  },
+  "schedule1": {
+    "meals_addback_pct": 0.5,
+    "addback_categories": {
+      "Meals (50%)": 0.5
+    },
+    "non_deductible_categories": [
+      "Penalties & Fines"
+    ],
+    "notes": "Schedule 1 reconciles book income to taxable income: add back the non-deductible 50% of meals & entertainment, penalties/fines, then deduct CCA claimed (books carry no depreciation in OilForge)."
+  },
+  "gst_capital_property_note": "ITC on capital personal property (equipment, vehicles) is all-or-nothing: >50% commercial use = full ITC in the period acquired; passenger vehicles capped at the CCA cost cap. Claim capital ITCs in the return for the period of purchase."
 }

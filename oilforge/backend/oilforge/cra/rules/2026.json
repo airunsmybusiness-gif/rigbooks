@@ -161,5 +161,84 @@
     "safety_gear_notes": "PPE required for site access (FR clothing, H2S monitors, boots) is 100% deductible.",
     "remote_work_notes": "Travel to special/remote work sites, lodging and reasonable allowances are deductible - keep site tickets as support."
   },
-  "records_retention_years": 6
+  "records_retention_years": 6,
+  "personal_tax": {
+    "federal_brackets": [
+      [
+        0,
+        0.14
+      ],
+      [
+        57375,
+        0.205
+      ],
+      [
+        114750,
+        0.26
+      ],
+      [
+        177882,
+        0.29
+      ],
+      [
+        253414,
+        0.33
+      ]
+    ],
+    "federal_basic_personal_amount": 16129,
+    "provincial_brackets": {
+      "AB": [
+        [
+          0,
+          0.08
+        ],
+        [
+          60000,
+          0.1
+        ],
+        [
+          151234,
+          0.12
+        ],
+        [
+          181481,
+          0.13
+        ],
+        [
+          241974,
+          0.14
+        ],
+        [
+          362961,
+          0.15
+        ]
+      ]
+    },
+    "provincial_basic_personal_amount": {
+      "AB": 22323
+    },
+    "dtc_of_taxable": {
+      "federal": {
+        "eligible": 0.150198,
+        "non_eligible": 0.090301
+      },
+      "AB": {
+        "eligible": 0.0812,
+        "non_eligible": 0.0218
+      }
+    },
+    "amt_exemption": 177882,
+    "notes": "PROVISIONAL: 2025 thresholds with 14% first federal bracket. Update when CRA publishes 2026 indexation."
+  },
+  "schedule1": {
+    "meals_addback_pct": 0.5,
+    "addback_categories": {
+      "Meals (50%)": 0.5
+    },
+    "non_deductible_categories": [
+      "Penalties & Fines"
+    ],
+    "notes": "Schedule 1 reconciles book income to taxable income: add back the non-deductible 50% of meals & entertainment, penalties/fines, then deduct CCA claimed (books carry no depreciation in OilForge)."
+  },
+  "gst_capital_property_note": "ITC on capital personal property (equipment, vehicles) is all-or-nothing: >50% commercial use = full ITC in the period acquired; passenger vehicles capped at the CCA cost cap. Claim capital ITCs in the return for the period of purchase."
 }

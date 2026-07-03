@@ -13,7 +13,7 @@ from . import __version__
 from .config import FRONTEND_DIST
 from .db import Base, engine
 from .routers import (auth_routes, entities, invoices, jobs, reports,
-                      rules_settings, shareholders, transactions)
+                      rules_settings, shareholders, tax, transactions)
 
 app = FastAPI(title="OilForge", version=__version__,
               description="Local-first corporate bookkeeping for Canadian "
@@ -28,6 +28,31 @@ app.add_middleware(
 
 Base.metadata.create_all(bind=engine)
 
+
+def _migrate_sqlite() -> None:
+    """Additive column migrations for existing local databases (SQLite has
+    no ALTER-safe ORM path; create_all only creates missing tables)."""
+    if not str(engine.url).startswith("sqlite"):
+        return
+    wanted = {
+        "bank_transactions": [
+            ("receipt_ref", "VARCHAR(255) DEFAULT ''"),
+            ("split_parent_id", "INTEGER"),
+        ],
+    }
+    with engine.connect() as conn:
+        for table, cols in wanted.items():
+            existing = {r[1] for r in conn.exec_driver_sql(
+                f"PRAGMA table_info({table})")}
+            for name, ddl in cols:
+                if name not in existing:
+                    conn.exec_driver_sql(
+                        f"ALTER TABLE {table} ADD COLUMN {name} {ddl}")
+        conn.commit()
+
+
+_migrate_sqlite()
+
 app.include_router(auth_routes.router)
 app.include_router(transactions.router)
 app.include_router(jobs.router)
@@ -38,6 +63,7 @@ app.include_router(shareholders.txn_router)
 app.include_router(shareholders.dividend_router)
 app.include_router(rules_settings.router)
 app.include_router(reports.router)
+app.include_router(tax.router)
 for r in entities.ALL:
     app.include_router(r)
 

@@ -114,15 +114,40 @@ class TestCCA:
         assert row["cca"] == 19800.0              # 30% of 66k
         assert row["ucc_closing"] == 46200.0
 
-    def test_disposal_reduces_ucc(self):
+    def test_disposal_triggers_recapture(self):
         sched = cra.cca_schedule(
             [{"cca_class": "10", "cost": 50000, "acquired_year": 2024,
               "disposed_year": 2025, "proceeds": 30000}],
             2025, self.rules)
         row = sched["classes"][0]
-        # 2024: base 1.5*50k=75k -> cca 22.5k, ucc 27.5k
-        # 2025: 27.5k - 30k disposal -> negative would be recapture; clamp 0
+        # 2024: base 1.5*50k=75k -> CCA 22.5k, UCC 27.5k
+        # 2025: 27.5k - 30k disposal -> UCC -2.5k -> recapture income
+        assert row["recapture"] == 2500.0
+        assert row["cca"] == 0.0
         assert row["ucc_closing"] == 0.0
+        assert sched["total_recapture"] == 2500.0
+
+    def test_disposal_triggers_terminal_loss(self):
+        # Sold cheap: class emptied with UCC left -> terminal loss deduction.
+        sched = cra.cca_schedule(
+            [{"cca_class": "10", "cost": 50000, "acquired_year": 2024,
+              "disposed_year": 2025, "proceeds": 10000}],
+            2025, self.rules)
+        row = sched["classes"][0]
+        # 2025: UCC 27.5k - 10k = 17.5k, no assets left -> terminal loss.
+        assert row["terminal_loss"] == 17500.0
+        assert row["cca"] == 0.0
+        assert row["ucc_closing"] == 0.0
+
+    def test_no_terminal_loss_while_assets_remain(self):
+        sched = cra.cca_schedule(
+            [{"cca_class": "10", "cost": 50000, "acquired_year": 2024,
+              "disposed_year": 2025, "proceeds": 10000},
+             {"cca_class": "10", "cost": 20000, "acquired_year": 2024}],
+            2025, self.rules)
+        row = sched["classes"][0]
+        assert row["terminal_loss"] == 0.0
+        assert row["cca"] > 0.0
 
     def test_multiple_classes(self):
         sched = cra.cca_schedule(
@@ -140,3 +165,36 @@ class TestCCA:
             2025, self.rules, claim_pct=0)
         assert sched["total_cca"] == 0.0
         assert sched["classes"][0]["ucc_closing"] == 10000.0
+
+
+class TestPersonalBridge:
+    def test_dividend_only_income(self):
+        est = cra.personal_dividend_tax({"non_eligible": 80000.0}, R25, "AB")
+        assert est["taxable_income"] == 92000.0
+        assert est["total_tax"] > 0
+        assert est["average_rate_on_cash"] < 20  # dividends are tax-efficient
+
+    def test_zero_income(self):
+        est = cra.personal_dividend_tax({}, R25)
+        assert est["total_tax"] == 0.0
+
+    def test_amt_warning_on_large_eligible(self):
+        est = cra.personal_dividend_tax({"eligible": 200000.0}, R25)
+        assert any("AMT" in w for w in est["warnings"])
+
+    def test_progressive_brackets(self):
+        low = cra.personal_dividend_tax({"non_eligible": 40000.0}, R25)
+        high = cra.personal_dividend_tax({"non_eligible": 200000.0}, R25)
+        assert high["average_rate_on_cash"] > low["average_rate_on_cash"]
+
+
+class TestSchedule1:
+    def test_meals_addback_and_cca(self):
+        s1 = cra.schedule1(100000.0, {"Meals (50%)": 4000.0}, 20000.0, 0, 0, R25)
+        # 100k + 2k meals add-back - 20k CCA
+        assert s1["net_income_for_tax"] == 82000.0
+        assert any("Meals" in l["line"] for l in s1["lines"])
+
+    def test_recapture_and_terminal_loss_lines(self):
+        s1 = cra.schedule1(50000.0, {}, 0.0, 3000.0, 1000.0, R25)
+        assert s1["net_income_for_tax"] == 52000.0
