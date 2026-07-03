@@ -11,7 +11,7 @@ from ..cra import engine as cra
 from ..db import get_db
 from ..helpers import (get_province, get_setting, parse_period, put_setting,
                        rules_for_year)
-from ..models import Shareholder, User
+from ..models import User
 from ..reports import statements
 from .crud_factory import serialize
 
@@ -41,27 +41,6 @@ def schedule1(start: str | None = None, end: str | None = None,
     summary = statements.collect(db, s, e)
     return {"period": summary["period"], **summary["schedule1"],
             "corporate_tax_estimate": summary["income"]["tax_estimate"]}
-
-
-@router.get("/personal-bridge")
-def personal_bridge(year: int, other_income: float = 0.0,
-                    db: Session = Depends(get_db),
-                    user: User = Depends(current_user)):
-    """Estimated personal tax per shareholder on the year's dividends —
-    the corporate-to-personal handoff for T1 planning."""
-    rules = rules_for_year(db, year)
-    province = get_province(db)
-    out = []
-    for holder in db.query(Shareholder).all():
-        actual = sh.dividends_by_kind(db, holder.id, year)
-        est = cra.personal_dividend_tax(actual, rules, province, other_income)
-        out.append({"shareholder": serialize(holder),
-                    "dividends": actual, "estimate": est})
-    return {"year": year, "province": province, "shareholders": out,
-            "tosi_note": ("If family members are shareholders, dividends to "
-                          "those not actively engaged in the business are "
-                          "subject to TOSI (taxed at top rate) — plan "
-                          "sprinkling with the accountant.")}
 
 
 @router.get("/grip")

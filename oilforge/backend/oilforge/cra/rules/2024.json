@@ -18,7 +18,8 @@
       "NL": 0.15,
       "NS": 0.15,
       "PE": 0.15
-    }
+    },
+    "rc4616_notes": "RC4616: closely related corporations can elect to treat certain intercompany supplies as made for nil consideration. Record the election in Settings if made."
   },
   "corporate_tax": {
     "federal_small_business_rate": 0.09,
@@ -165,66 +166,105 @@
   "personal_tax": {
     "federal_brackets": [
       [
-        0,
+        55867,
         0.15
       ],
       [
-        55867,
+        111733,
         0.205
       ],
       [
-        111733,
+        173205,
         0.26
       ],
       [
-        173205,
+        246752,
         0.29
       ],
       [
-        246752,
+        null,
         0.33
       ]
     ],
-    "federal_basic_personal_amount": 15705,
-    "provincial_brackets": {
-      "AB": [
-        [
-          0,
-          0.1
-        ],
-        [
-          148269,
-          0.12
-        ],
-        [
-          177922,
-          0.13
-        ],
-        [
-          237230,
-          0.14
-        ],
-        [
-          355845,
-          0.15
-        ]
-      ]
-    },
-    "provincial_basic_personal_amount": {
-      "AB": 21885
-    },
-    "dtc_of_taxable": {
-      "federal": {
-        "eligible": 0.150198,
-        "non_eligible": 0.090301
-      },
+    "federal_bpa": 15705,
+    "provincial": {
       "AB": {
-        "eligible": 0.0812,
-        "non_eligible": 0.0218
+        "brackets": [
+          [
+            148269,
+            0.1
+          ],
+          [
+            177922,
+            0.12
+          ],
+          [
+            237230,
+            0.13
+          ],
+          [
+            355845,
+            0.14
+          ],
+          [
+            null,
+            0.15
+          ]
+        ],
+        "bpa": 21885,
+        "dtc_of_taxable": {
+          "eligible": 0.0812,
+          "non_eligible": 0.0218
+        }
       }
     },
-    "amt_exemption": 173205,
-    "notes": "Estimates only. AMT (revamped 2024) can apply with large eligible dividends/capital gains; TOSI restricts sprinkling to family members not active in the business."
+    "amt": {
+      "rate": 0.205,
+      "exemption": 173205,
+      "credit_allowance": 0.5,
+      "notes": "Simplified 2024+ AMT: dividends at actual amount (no gross-up), 50% of non-refundable credits allowed. Preview only."
+    },
+    "notes": "T1 PREVIEW ONLY - brackets/credits simplified (no CPP/EI, no clawbacks). The accountant files the real T1."
+  },
+  "gifi": {
+    "revenue": {
+      "Revenue - Contract Services": "8000"
+    },
+    "expenses": {
+      "Subcontractors": "8360",
+      "Fuel & Petroleum": "9224",
+      "Equipment Rental": "8914",
+      "Equipment Repairs & Parts": "8960",
+      "Shop Supplies": "8811",
+      "Small Tools (<$500)": "8960",
+      "Safety Gear & PPE": "9270",
+      "Camp & Accommodation": "9200",
+      "Meals (50%)": "8523",
+      "Travel": "9200",
+      "Insurance - Commercial": "8690",
+      "Insurance - Equipment": "8690",
+      "WCB Premiums": "9130",
+      "Professional Fees": "8860",
+      "Office & Admin": "8810",
+      "Phone & Communications": "9225",
+      "Software & Subscriptions": "8810",
+      "Bank Fees": "8715",
+      "Interest & Loan Charges": "8710",
+      "Utilities - Shop": "9220",
+      "Rent - Shop/Yard": "8910",
+      "Licenses & Permits": "8760",
+      "Training & Certifications": "8810",
+      "Marketing": "8520",
+      "Other Operating": "9270",
+      "CCA": "8670"
+    },
+    "notes": "Default GIFI mapping for Schedule 125 - accountant may remap."
+  },
+  "t2": {
+    "schedule1_addbacks": {
+      "Meals (50%)": 0.5
+    },
+    "notes": "Schedule 1 adds back the non-deductible portion of listed categories (ITA 67.1 meals 50%)."
   },
   "schedule1": {
     "meals_addback_pct": 0.5,

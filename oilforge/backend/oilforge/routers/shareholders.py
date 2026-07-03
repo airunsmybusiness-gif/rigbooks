@@ -124,3 +124,82 @@ def overview(year: int | None = None, db: Session = Depends(get_db),
                 bal, fye.isoformat(), rules),
         })
     return {"year": year, "shareholders": out}
+
+
+@router.get("/{shareholder_id}/yearly")
+def yearly_balances(shareholder_id: int, db: Session = Depends(get_db),
+                    user: User = Depends(current_user)):
+    """Multi-year view: balance at each fiscal year-end, the ITA 15(2)
+    repayment deadline for that balance, and dividends paid that year."""
+    holder = db.get(Shareholder, shareholder_id)
+    if holder is None:
+        raise HTTPException(404, "Shareholder not found")
+    first = (db.query(ShareholderTxn)
+             .filter_by(shareholder_id=shareholder_id)
+             .order_by(ShareholderTxn.date).first())
+    first_div = (db.query(DividendDeclaration)
+                 .filter_by(shareholder_id=shareholder_id)
+                 .order_by(DividendDeclaration.date).first())
+    dates = [d.date for d in (first, first_div) if d is not None]
+    if not dates:
+        return {"years": []}
+    start_year = min(dates).year
+    out = []
+    for year in range(start_year, date.today().year + 1):
+        fye = fiscal_year_end(db, year)
+        bal = sh.balance(db, shareholder_id, fye)
+        rules = rules_for_year(db, year)
+        months = rules["shareholder_loan"]["ita_15_2_repayment_months_after_year_end"]
+        deadline = date(fye.year + (fye.month + months - 1) // 12,
+                        (fye.month + months - 1) % 12 + 1,
+                        min(fye.day, 28))
+        divs = sh.dividends_by_kind(db, shareholder_id, year)
+        # If the balance was cleared by the deadline, 15(2) is satisfied.
+        bal_at_deadline = sh.balance(db, shareholder_id, min(deadline, date.today()))
+        out.append({
+            "year": year,
+            "fye": fye.isoformat(),
+            "balance_at_fye": bal,
+            "repayment_deadline": deadline.isoformat(),
+            "balance_at_deadline": bal_at_deadline,
+            "ita_15_2_ok": bal <= 0.005 or bal_at_deadline <= 0.005
+                           or date.today() < deadline,
+            "dividends": {k: round(v, 2) for k, v in divs.items()},
+        })
+    return {"shareholder": serialize(holder), "years": out}
+
+
+@router.get("/{shareholder_id}/repayment-plan")
+def repayment_plan(shareholder_id: int, db: Session = Depends(get_db),
+                   user: User = Depends(current_user)):
+    """What it takes to clear the loan before the ITA 15(2) deadline."""
+    holder = db.get(Shareholder, shareholder_id)
+    if holder is None:
+        raise HTTPException(404, "Shareholder not found")
+    today = date.today()
+    bal = sh.balance(db, shareholder_id)
+    fye = fiscal_year_end(db, today.year)
+    if today > fye:
+        fye = fiscal_year_end(db, today.year + 1)
+    rules = rules_for_year(db, today.year)
+    months = rules["shareholder_loan"]["ita_15_2_repayment_months_after_year_end"]
+    deadline = date(fye.year + (fye.month + months - 1) // 12,
+                    (fye.month + months - 1) % 12 + 1, min(fye.day, 28))
+    months_left = max((deadline.year - today.year) * 12
+                      + deadline.month - today.month, 1)
+    prescribed = rules["shareholder_loan"]["prescribed_rate"]
+    return {
+        "balance": bal,
+        "fiscal_year_end": fye.isoformat(),
+        "repayment_deadline": deadline.isoformat(),
+        "months_remaining": months_left,
+        "monthly_repayment_to_clear": round(max(bal, 0) / months_left, 2),
+        "dividend_to_clear_now": round(max(bal, 0), 2),
+        "estimated_80_4_interest_if_held_to_deadline":
+            round(max(bal, 0) * prescribed * months_left / 12, 2),
+        "options": [
+            "Repay in cash before the deadline",
+            "Declare a dividend settled against the loan (creates T5 income)",
+            "Combination: partial repayment + smaller dividend",
+        ],
+    }

@@ -18,7 +18,6 @@ export default function TaxOptimizer() {
   const { period, year } = useStore();
   const [opt, setOpt] = useState<any>(null);
   const [s1, setS1] = useState<any>(null);
-  const [bridge, setBridge] = useState<any>(null);
   const [grip, setGrip] = useState<Record<string, number>>({});
   const [gripDraft, setGripDraft] = useState("");
 
@@ -26,7 +25,6 @@ export default function TaxOptimizer() {
     const range = `start=${period.start}&end=${period.end}`;
     api.get(`/api/tax/optimizer?${range}`).then(setOpt);
     api.get(`/api/tax/schedule1?${range}`).then(setS1);
-    api.get(`/api/tax/personal-bridge?year=${year}`).then(setBridge);
     api.get("/api/tax/grip").then((g) => {
       setGrip(g);
       setGripDraft(String(g[String(year)] ?? ""));
@@ -123,25 +121,18 @@ export default function TaxOptimizer() {
             </p>
           </Card>
 
-          {bridge && bridge.shareholders.length > 0 && (
-            <Card title={`Personal tax bridge — ${year} dividends → T1`}>
-              {bridge.shareholders.map((b: any) => (
-                <div key={b.shareholder.id} className="mb-3 rounded-xl border border-line bg-surface-2 p-3">
-                  <p className="text-sm font-semibold text-ink-1">{b.shareholder.name}</p>
-                  <p className="mt-1 text-xs text-ink-2">
-                    Cash received <strong>{money(b.estimate.cash_received)}</strong> ·
-                    taxable (grossed up) <strong>{money(b.estimate.taxable_income)}</strong> ·
-                    est. personal tax <strong>{money(b.estimate.total_tax)}</strong>{" "}
-                    ({b.estimate.average_rate_on_cash}% of cash)
-                  </p>
-                  {b.estimate.warnings.map((w: string, i: number) => (
-                    <p key={i} className="mt-1 text-xs text-bad">⚠ {w}</p>
-                  ))}
-                </div>
-              ))}
-              <p className="text-xs text-ink-3">{bridge.tosi_note}</p>
-            </Card>
-          )}
+          <Card title="Personal tax (T1) preview">
+            <p className="text-sm text-ink-2">
+              The <a href="/personal-tax" className="font-medium text-accent underline">
+              Personal Tax Bridge</a> page runs the full owner-side estimate:
+              dividends through the federal + Alberta brackets with both
+              dividend tax credits, employment/other income, RRSP deductions,
+              the simplified AMT check, and the combined corporate + personal
+              effective rate. If family members are shareholders, dividends to
+              anyone not active in the business fall under TOSI — plan with
+              the accountant.
+            </p>
+          </Card>
         </div>
       </div>
     </div>

@@ -309,3 +309,55 @@ class DividendDeclaration(Base, TimestampMixin):
     settlement: Mapped[str] = mapped_column(String(8), default="loan")  # loan|cash
     resolution_ref: Mapped[str] = mapped_column(String(128), default="")  # minutes / resolution #
     notes: Mapped[str] = mapped_column(Text, default="")
+
+
+# ------------------------------------------------------------ field ops
+
+class Attachment(Base, TimestampMixin):
+    """Photo/document attached to a record (field-ticket photos, receipts).
+    Bytes live on disk under DATA_DIR/attachments; DB stores metadata."""
+    __tablename__ = "attachments"
+    id: Mapped[int] = mapped_column(primary_key=True)
+    entity: Mapped[str] = mapped_column(String(32), index=True)   # e.g. job_entries
+    entity_id: Mapped[int] = mapped_column(Integer, index=True)
+    filename: Mapped[str] = mapped_column(String(255))
+    stored_name: Mapped[str] = mapped_column(String(255), unique=True)
+    mime: Mapped[str] = mapped_column(String(64), default="application/octet-stream")
+    size: Mapped[int] = mapped_column(Integer, default=0)
+    note: Mapped[str] = mapped_column(Text, default="")
+
+
+class Part(Base, TimestampMixin):
+    """Parts/consumables inventory for equipment upkeep."""
+    __tablename__ = "parts"
+    id: Mapped[int] = mapped_column(primary_key=True)
+    name: Mapped[str] = mapped_column(String(255), index=True)
+    part_number: Mapped[str] = mapped_column(String(128), default="")
+    qty_on_hand: Mapped[float] = mapped_column(Float, default=0.0)
+    unit_cost: Mapped[float] = mapped_column(Float, default=0.0)
+    min_qty: Mapped[float] = mapped_column(Float, default=0.0)
+    location: Mapped[str] = mapped_column(String(128), default="")
+    notes: Mapped[str] = mapped_column(Text, default="")
+
+
+class SafetyItem(Base, TimestampMixin):
+    """Safety/compliance registry: certificates, inspections, policies."""
+    __tablename__ = "safety_items"
+    id: Mapped[int] = mapped_column(primary_key=True)
+    kind: Mapped[str] = mapped_column(String(24), default="certificate")
+    # certificate | inspection | policy | insurance | permit
+    name: Mapped[str] = mapped_column(String(255))
+    reference: Mapped[str] = mapped_column(String(128), default="")
+    issued: Mapped[date | None] = mapped_column(Date, nullable=True)
+    expires: Mapped[date | None] = mapped_column(Date, nullable=True, index=True)
+    equipment_id: Mapped[int | None] = mapped_column(ForeignKey("equipment.id"), nullable=True)
+    notes: Mapped[str] = mapped_column(Text, default="")
+
+
+class PersonalTaxInput(Base, TimestampMixin):
+    """Owner-entered personal income/deductions for the T1 preview."""
+    __tablename__ = "personal_tax_inputs"
+    id: Mapped[int] = mapped_column(primary_key=True)
+    shareholder_id: Mapped[int] = mapped_column(ForeignKey("shareholders.id"), index=True)
+    year: Mapped[int] = mapped_column(Integer, index=True)
+    data: Mapped[dict] = mapped_column(JSON, default=dict)

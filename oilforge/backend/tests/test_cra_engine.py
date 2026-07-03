@@ -167,27 +167,6 @@ class TestCCA:
         assert sched["classes"][0]["ucc_closing"] == 10000.0
 
 
-class TestPersonalBridge:
-    def test_dividend_only_income(self):
-        est = cra.personal_dividend_tax({"non_eligible": 80000.0}, R25, "AB")
-        assert est["taxable_income"] == 92000.0
-        assert est["total_tax"] > 0
-        assert est["average_rate_on_cash"] < 20  # dividends are tax-efficient
-
-    def test_zero_income(self):
-        est = cra.personal_dividend_tax({}, R25)
-        assert est["total_tax"] == 0.0
-
-    def test_amt_warning_on_large_eligible(self):
-        est = cra.personal_dividend_tax({"eligible": 200000.0}, R25)
-        assert any("AMT" in w for w in est["warnings"])
-
-    def test_progressive_brackets(self):
-        low = cra.personal_dividend_tax({"non_eligible": 40000.0}, R25)
-        high = cra.personal_dividend_tax({"non_eligible": 200000.0}, R25)
-        assert high["average_rate_on_cash"] > low["average_rate_on_cash"]
-
-
 class TestSchedule1:
     def test_meals_addback_and_cca(self):
         s1 = cra.schedule1(100000.0, {"Meals (50%)": 4000.0}, 20000.0, 0, 0, R25)

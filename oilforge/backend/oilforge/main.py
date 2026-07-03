@@ -12,8 +12,9 @@ from fastapi.staticfiles import StaticFiles
 from . import __version__
 from .config import FRONTEND_DIST
 from .db import Base, engine
-from .routers import (auth_routes, entities, invoices, jobs, reports,
-                      rules_settings, shareholders, tax, transactions)
+from .routers import (auth_routes, entities, field_ops, invoices, jobs,
+                      reports, rules_settings, shareholders, t2_personal,
+                      tax, transactions)
 
 app = FastAPI(title="OilForge", version=__version__,
               description="Local-first corporate bookkeeping for Canadian "
@@ -61,6 +62,11 @@ app.include_router(invoices.router)
 app.include_router(shareholders.router)
 app.include_router(shareholders.txn_router)
 app.include_router(shareholders.dividend_router)
+app.include_router(t2_personal.router)
+app.include_router(t2_personal.personal_router)
+app.include_router(field_ops.router)
+app.include_router(field_ops.parts_router)
+app.include_router(field_ops.safety_router)
 app.include_router(rules_settings.router)
 app.include_router(reports.router)
 app.include_router(tax.router)

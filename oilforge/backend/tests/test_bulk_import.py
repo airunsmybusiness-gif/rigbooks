@@ -147,16 +147,17 @@ def test_grip_warning(client, auth):
     assert any("GRIP" in f["title"] for f in r["findings"])
 
 
-def test_schedule1_and_personal_bridge(client, auth):
+def test_schedule1_and_personal_preview(client, auth):
     s1 = client.get(f"/api/tax/schedule1?start={YEAR}-01-01&end={YEAR}-12-31",
                     headers=auth).json()
     assert s1["lines"][0]["line"].startswith("Net income")
     assert s1["lines"][-1]["line"] == "Net income for tax purposes"
 
-    pb = client.get(f"/api/tax/personal-bridge?year={YEAR}", headers=auth).json()
-    assert pb["shareholders"]
-    est = pb["shareholders"][-1]["estimate"]
-    assert est["taxable_income"] > 0
+    # Personal T1 preview lives at /api/personal-tax (merged implementation).
+    holders = client.get("/api/shareholders", headers=auth).json()["items"]
+    pb = client.get(f"/api/personal-tax/{holders[0]['id']}/{YEAR}",
+                    headers=auth).json()
+    assert "t1_preview" in pb
 
 
 def test_yearend_checklist_and_zip(client, auth):
