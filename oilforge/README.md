@@ -19,6 +19,29 @@ First launch creates your local account. Data lives in `~/.oilforge/`
 (override with `OILFORGE_DATA_DIR`, or set
 `DATABASE_URL=postgresql+psycopg://…` for PostgreSQL).
 
+## The yearly CIBC workflow (start here)
+
+1. **Export the year from CIBC online banking** — chequing and credit card,
+   CSV format. No editing needed: OilForge reads CIBC's headerless
+   chequing layout (`Date, Description, Debit, Credit`), the credit-card
+   layout with the masked card-number column, and other banks'
+   single signed-amount exports. Upload both files on **Bank Import**.
+2. **Review screen**: everything is auto-categorized (fuel cardlocks, parts,
+   camp, WCB, meals…). Transfers to your personal account flag as
+   *Owner Withdrawal*; your credit-card payments are auto-excluded so they
+   never double count. Re-uploading skips duplicates.
+3. **Bulk clean-up**: tick rows → set a category → Apply. Split mixed
+   lines (part business / part personal) with the ✂ button — the original
+   stays in the audit trail. Big purchases get the 🚚 button:
+   one click creates a CCA asset (net of GST) on the depreciation schedule.
+4. **Post the draws**: every flagged owner transfer gets ⇄'d onto the
+   shareholder loan ledger in seconds.
+5. **Tax Optimizer** page: see every exposure and missed claim — then
+   **Reports → Year-end close** for the checklist and the accountant ZIP.
+
+Historical data (pre-OilForge years) imports through
+**Expenses → Import historical CSV** (template provided).
+
 ## The dividend workflow (the heart of the app)
 
 1. **Bank Import** — statements auto-classify; e-transfers/ATM draws to
@@ -44,8 +67,10 @@ First launch creates your local account. Data lives in `~/.oilforge/`
 | **Equipment & CCA** | Asset registry by CCA class, maintenance logs, full **UCC simulation** per class (AIIP first-year factor, disposals/recapture clamp), utilization hours from field tickets |
 | **Expenses** | Corporate categories (camp, PPE, subcontractors, WCB…), ITCs per year-pack, job/equipment tagging for costing |
 | **Dashboard** | Cash position, income before tax after CCA, GST line 109, shareholder loan, dividends, monthly cash flow, job margins, equipment hours; dark/light; mobile-first |
-| **Reports** | Income statement, **derived trial balance** (balanced, equity plug flagged), GST34 working copy, financial summary PDF, append-only audit trail |
-| **Backup** | Full JSON export/restore, optionally **encrypted** (PBKDF2 + Fernet) — plus a data-migration endpoint stub for future QuickBooks/Wave imports |
+| **Tax Optimizer** | Deduction scanner (unposted draws, 15(2), capital-vs-expense, uncategorized lines, unbilled WIP, zero-activity reminders for PPE/training/camp/small tools), **T2 Schedule 1** working paper (50% meals add-back, recapture, terminal loss), **GRIP tracking** with Part III.1 warnings, **personal tax bridge** (dividends through federal + AB brackets with AMT/TOSI warnings) |
+| **Year-end close** | 7-point checklist + one-click **accountant ZIP**: financials PDF, trial balance, categorized expenses, full bank audit trail, CCA Schedule 8 (with recapture/terminal loss), Schedule 1, GST34, journal entries, T5 figures, tax optimization memo |
+| **Reports** | Income statement (tax estimate on the Schedule 1 base), **derived trial balance**, GST34 working copy, financial summary PDF, append-only audit trail, cash-flow forecast |
+| **Backup** | Full JSON export/restore, optionally **encrypted** (PBKDF2-SHA256 600k iterations, per-file salt, AES/Fernet); conflict-safe restore; historical CSV import templates |
 
 ## CRA rules engine (yearly updatable)
 
@@ -62,8 +87,23 @@ packs in `backend/oilforge/cra/rules/<year>.json`:
 Update rates in the **Tax Rules** page (stored as overrides) or drop in a
 new JSON pack. Missing years fall back with a visible *provisional* badge.
 
+### CRA tips baked into the app
+
+- **Meals are 50%**: full amount tracked, ITC at 50%, and the Schedule 1
+  add-back computed automatically — never claim 100% by accident.
+- **Capital vs expense**: purchases ≥ $2,500 sitting in repair/supply
+  categories get flagged; tools under $500 are class 12 (100% write-off).
+- **Own-account transfers** (credit-card payments) are excluded on import
+  so expenses are never double-counted — a classic audit finding.
+- **Recapture & terminal loss** are computed on disposals, not ignored.
+- **GST on capital property**: full ITC in the purchase period when
+  commercial use > 50% (note shown in the Tax Rules pack).
+- **Receipt refs everywhere**: bank lines, expenses, fuel — CRA wants the
+  paper; the app tracks where it is. (Receipt photo OCR is on the roadmap;
+  today a receipt # or photo filename keeps you audit-ready.)
+
 **Estimates are estimates** — T2 filing, GRIP/eligible-dividend
-designations, and passive-income grinds are your accountant's call. The
+designations, AMT and passive-income grinds are your accountant's call. The
 app's job is clean records and audit-ready exports (keep 6+ years).
 
 ## Development

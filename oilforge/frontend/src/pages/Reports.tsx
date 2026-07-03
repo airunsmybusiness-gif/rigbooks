@@ -10,7 +10,7 @@ import { useStore } from "../store";
 
 export default function Reports() {
   const { period, year } = useStore();
-  const [tab, setTab] = useState<"income" | "tb" | "gst" | "audit">("income");
+  const [tab, setTab] = useState<"yearend" | "income" | "tb" | "gst" | "audit">("yearend");
   return (
     <div className="fade-up space-y-4">
       <PageHeader title="Reports & exports" sub="Accountant-ready outputs, audit trail, and backups"
@@ -30,8 +30,9 @@ export default function Reports() {
           </div>
         } />
       <div className="flex gap-1 overflow-x-auto rounded-xl border border-line bg-surface-1 p-1">
-        {([["income", "Income statement"], ["tb", "Trial balance"],
-           ["gst", "GST/HST return"], ["audit", "Audit trail"]] as const)
+        {([["yearend", "Year-end close"], ["income", "Income statement"],
+           ["tb", "Trial balance"], ["gst", "GST/HST return"],
+           ["audit", "Audit trail"]] as const)
           .map(([k, label]) => (
             <button key={k} onClick={() => setTab(k)}
               className={"whitespace-nowrap rounded-lg px-3 py-1.5 text-sm font-medium transition-colors " +
@@ -40,6 +41,7 @@ export default function Reports() {
             </button>
           ))}
       </div>
+      {tab === "yearend" && <YearEndTab />}
       {tab === "income" && <IncomeTab />}
       {tab === "tb" && <TrialBalanceTab />}
       {tab === "gst" && <GstTab />}
@@ -76,6 +78,46 @@ function BackupButtons() {
           }
         }} />
     </>
+  );
+}
+
+function YearEndTab() {
+  const { period, year } = useStore();
+  const [chk, setChk] = useState<any>(null);
+  useEffect(() => {
+    api.get(`/api/reports/yearend/checklist?start=${period.start}&end=${period.end}`)
+      .then(setChk);
+  }, [period]);
+  if (!chk) return null;
+  return (
+    <Card title="Year-end close"
+      action={
+        <Button onClick={() =>
+          api.download(`/api/reports/yearend.zip?start=${period.start}&end=${period.end}`,
+            `OilForge_YearEnd_${year}.zip`)}>
+          <Download size={15} /> Accountant ZIP
+        </Button>
+      }>
+      <p className="mb-4 text-sm text-ink-3">
+        Work the checklist, then download the ZIP: financial summary PDF,
+        trial balance, categorized expenses, full bank audit trail, CCA
+        Schedule 8, Schedule 1 working paper, GST34, journal entries, T5
+        figures per shareholder, and the tax optimization memo.
+      </p>
+      <div className="space-y-2">
+        {chk.items.map((i: any) => (
+          <div key={i.item} className="flex items-center gap-3 rounded-xl border border-line bg-surface-2 px-4 py-2.5">
+            <Badge tone={i.ok ? "good" : "warn"}>{i.ok ? "✓ done" : "open"}</Badge>
+            <span className="text-sm text-ink-1">{i.item}</span>
+          </div>
+        ))}
+      </div>
+      <p className={"mt-4 text-sm font-medium " + (chk.ready ? "text-good" : "text-ink-3")}>
+        {chk.ready
+          ? "✓ Everything checks out — the books are ready for T2 + T1 filing."
+          : "Open items above — the Tax Optimizer page shows how to clear each one."}
+      </p>
+    </Card>
   );
 }
 

@@ -2,8 +2,8 @@
  * Collapses to a slide-over below lg for field use. */
 import {
   Banknote, BookOpenText, Calendar, FileSpreadsheet, Hammer, Landmark,
-  LayoutDashboard, LogOut, Menu, Moon, Receipt, Settings2, Sun, Truck,
-  Users, Wallet, X,
+  LayoutDashboard, LogOut, Menu, Moon, Receipt, Settings2, Sparkles, Sun,
+  Truck, Wallet, X,
 } from "lucide-react";
 import { useState } from "react";
 import { NavLink, Outlet } from "react-router-dom";
@@ -18,6 +18,7 @@ const NAV = [
   { to: "/expenses", label: "Expenses", icon: Wallet },
   { to: "/equipment", label: "Equipment & CCA", icon: Truck },
   { to: "/shareholder", label: "Dividends & Loans", icon: Banknote },
+  { to: "/tax-optimizer", label: "Tax Optimizer", icon: Sparkles },
   { to: "/reports", label: "Reports & Exports", icon: FileSpreadsheet },
   { to: "/tax-rules", label: "Tax Rules", icon: BookOpenText },
   { to: "/settings", label: "Settings", icon: Settings2 },

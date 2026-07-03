@@ -60,7 +60,13 @@ export default function Dashboard() {
           sub={`${(inc.small_business_rate * 100).toFixed(1)}% small-business rate`} />
       </div>
 
-      <Card title="Monthly cash flow">
+      <Card title="Monthly cash flow"
+        action={d.forecast && (
+          <span className="text-xs text-ink-3">
+            forecast: {money(d.forecast.avg_monthly_net)}/mo →{" "}
+            {money(d.forecast.projected_cash_in_3mo)} cash in 3 months
+          </span>
+        )}>
         <CashFlow data={d.cash_flow} />
       </Card>
 

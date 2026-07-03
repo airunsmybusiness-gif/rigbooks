@@ -9,6 +9,7 @@ import Login from "./pages/Login";
 import Reports from "./pages/Reports";
 import Settings from "./pages/Settings";
 import ShareholderPage from "./pages/Shareholder";
+import TaxOptimizer from "./pages/TaxOptimizer";
 import TaxRules from "./pages/TaxRules";
 import Transactions from "./pages/Transactions";
 import { useStore } from "./store";
@@ -27,6 +28,7 @@ export default function App() {
           <Route path="/expenses" element={<Expenses />} />
           <Route path="/equipment" element={<EquipmentPage />} />
           <Route path="/shareholder" element={<ShareholderPage />} />
+          <Route path="/tax-optimizer" element={<TaxOptimizer />} />
           <Route path="/reports" element={<Reports />} />
           <Route path="/tax-rules" element={<TaxRules />} />
           <Route path="/settings" element={<Settings />} />

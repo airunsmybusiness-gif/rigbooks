@@ -1,7 +1,10 @@
-/** Corporate expenses — quick entry with job/equipment tagging for costing. */
-import { useEffect, useState } from "react";
+/** Corporate expenses — quick entry with job/equipment tagging for costing,
+ * plus historical-data CSV import. */
+import { Download, Upload } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
 import { api, money } from "../api";
 import CrudPage, { type FieldDef } from "../components/CrudPage";
+import { Button } from "../components/ui";
 
 const CATEGORIES = [
   "Subcontractors", "Fuel & Petroleum", "Equipment Rental",
@@ -18,6 +21,9 @@ const CATEGORIES = [
 export default function Expenses() {
   const [jobs, setJobs] = useState<any[]>([]);
   const [equipment, setEquipment] = useState<any[]>([]);
+  const [importMsg, setImportMsg] = useState("");
+  const [reloadKey, setReloadKey] = useState(0);
+  const fileRef = useRef<HTMLInputElement>(null);
   useEffect(() => {
     api.get("/api/jobs").then((r) => setJobs(r.items));
     api.get("/api/equipment").then((r) => setEquipment(r.items ?? r));
@@ -43,7 +49,27 @@ export default function Expenses() {
   ];
 
   return (
-    <CrudPage title="Expenses"
+    <div>
+      <div className="mb-3 flex flex-wrap items-center gap-2">
+        <Button variant="outline" onClick={() =>
+          api.download("/api/expenses/import-template", "oilforge_expenses_template.csv")}>
+          <Download size={14} /> CSV template
+        </Button>
+        <Button variant="outline" onClick={() => fileRef.current?.click()}>
+          <Upload size={14} /> Import historical CSV
+        </Button>
+        <input ref={fileRef} type="file" accept=".csv" hidden
+          onChange={async (e) => {
+            const f = e.target.files?.[0];
+            if (!f) return;
+            const r = await api.upload("/api/expenses/import", f);
+            setImportMsg(`Imported ${r.created} expenses` +
+              (r.skipped ? ` (${r.skipped} rows skipped)` : ""));
+            setReloadKey((k) => k + 1);
+          }} />
+        {importMsg && <span className="text-sm text-good">{importMsg}</span>}
+      </div>
+      <CrudPage key={reloadKey} title="Expenses"
       sub="ITCs computed from the year's rules — tag a job for per-contract costing"
       path="/api/expenses" fields={fields}
       transform={(f) => ({
@@ -68,5 +94,6 @@ export default function Expenses() {
             {money(items.reduce((s, x) => s + x.itc, 0))}</strong></span>
         </div>
       )} />
+    </div>
   );
 }
