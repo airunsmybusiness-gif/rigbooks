@@ -68,7 +68,8 @@ def list_transactions(start: str | None = None, end: str | None = None,
              .filter(BankTransaction.date >= s, BankTransaction.date <= e))
     if q:
         query = query.filter(or_(BankTransaction.description.ilike(f"%{q}%"),
-                                 BankTransaction.notes.ilike(f"%{q}%")))
+                                 BankTransaction.notes.ilike(f"%{q}%"),
+                                 BankTransaction.receipt_ref.ilike(f"%{q}%")))
     if category:
         query = query.filter(BankTransaction.category == category)
     if status:

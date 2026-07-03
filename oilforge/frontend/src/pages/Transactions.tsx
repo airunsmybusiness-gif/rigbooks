@@ -2,8 +2,8 @@
  * recategorize, transaction splitting, receipt refs, shareholder-ledger
  * posting, and one-click capital-purchase → CCA asset conversion. */
 import {
-  ArrowRightLeft, CheckSquare, Scissors, Settings, Square, Trash2, Truck,
-  Upload,
+  ArrowRightLeft, Camera, CheckSquare, Loader2, Paperclip, Scissors,
+  Settings, Square, Trash2, Truck, Upload,
 } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { api, money } from "../api";
@@ -40,6 +40,8 @@ export default function Transactions() {
   const [posting, setPosting] = useState<any | null>(null);
   const [splitting, setSplitting] = useState<any | null>(null);
   const [toAsset, setToAsset] = useState<any | null>(null);
+  const [attaching, setAttaching] = useState<any | null>(null);
+  const [uploading, setUploading] = useState(false);
   const [selected, setSelected] = useState<Set<number>>(new Set());
   const [bulkCat, setBulkCat] = useState("");
   const fileRef = useRef<HTMLInputElement>(null);
@@ -65,14 +67,14 @@ export default function Transactions() {
   useEffect(() => { load(); }, [load]);
 
   const upload = async (file: File) => {
-    setError(""); setMessage("");
+    setError(""); setMessage(""); setUploading(true);
     try {
       const r = await api.upload("/api/transactions/import", file);
       setMessage(`Imported ${r.created} transactions` +
         (r.skipped_duplicates ? ` (${r.skipped_duplicates} duplicates skipped)` : "") +
         ". Review the categories below — bulk-select rows to recategorize.");
       load();
-    } catch (e: any) { setError(e.message); }
+    } catch (e: any) { setError(e.message); } finally { setUploading(false); }
   };
 
   const patch = async (id: number, body: Record<string, string>) => {
@@ -108,8 +110,10 @@ export default function Transactions() {
             <Button variant="outline" onClick={() => setShowRules(true)}>
               <Settings size={15} /> Classifier rules
             </Button>
-            <Button onClick={() => fileRef.current?.click()}>
-              <Upload size={15} /> Upload CSV
+            <Button onClick={() => fileRef.current?.click()} disabled={uploading}>
+              {uploading
+                ? <><Loader2 size={15} className="animate-spin" /> Importing…</>
+                : <><Upload size={15} /> Upload CSV</>}
             </Button>
             <input ref={fileRef} type="file" accept=".csv" hidden
               onChange={(e) => e.target.files?.[0] && upload(e.target.files[0])} />
@@ -127,7 +131,7 @@ export default function Transactions() {
 
       <div className="flex flex-wrap items-center gap-2">
         <Input value={q} onChange={(e) => setQ(e.target.value)}
-          placeholder="Search description…" className="max-w-56" />
+          placeholder="Search description or receipt #…" className="max-w-60" />
         <Select value={catFilter} onChange={(e) => setCatFilter(e.target.value)} className="!w-auto">
           <option value="">All categories</option>
           {categories.map((c) => <option key={c}>{c}</option>)}
@@ -213,6 +217,10 @@ export default function Transactions() {
                       <Scissors size={14} />
                     </button>
                   )}
+                  <button className="rounded-lg p-1.5 text-ink-3 hover:bg-surface-2 hover:text-ink-1"
+                    title="Receipt photo / attachments" onClick={() => setAttaching(t)}>
+                    <Paperclip size={14} />
+                  </button>
                   {t.debit >= 500 && t.status === "business" && (
                     <button className="rounded-lg p-1.5 text-ink-3 hover:bg-surface-2 hover:text-ink-1"
                       title="Convert to CCA asset" onClick={() => setToAsset(t)}>
@@ -248,8 +256,116 @@ export default function Transactions() {
         <ToAssetModal txn={toAsset} onClose={() => setToAsset(null)}
           onDone={(msg) => { setToAsset(null); setMessage(msg); load(); }} />
       )}
+      {attaching && (
+        <AttachmentsModal txn={attaching} onClose={() => setAttaching(null)}
+          onChanged={(receipt) => {
+            if (receipt) patch(attaching.id, { receipt_ref: receipt });
+          }} />
+      )}
       {showRules && <RulesModal categories={categories} onClose={() => setShowRules(false)} />}
     </div>
+  );
+}
+
+function AttachmentsModal({ txn, onClose, onChanged }: {
+  txn: any; onClose: () => void; onChanged: (receipt?: string) => void;
+}) {
+  const [items, setItems] = useState<any[]>([]);
+  const [thumbs, setThumbs] = useState<Record<number, string>>({});
+  const [receipt, setReceipt] = useState(txn.receipt_ref || "");
+  const [busy, setBusy] = useState(false);
+  const camRef = useRef<HTMLInputElement>(null);
+  const fileRef = useRef<HTMLInputElement>(null);
+
+  const load = async () => {
+    const list = await api.get(`/api/attachments/bank_transactions/${txn.id}`);
+    setItems(list);
+    // The file endpoint needs the bearer token, so <img src> can't hit it
+    // directly — fetch blobs and hand object URLs to the thumbnails.
+    const { getToken } = await import("../api");
+    for (const a of list) {
+      if (a.mime.startsWith("image/") && !thumbs[a.id]) {
+        const res = await fetch(`/api/attachments/file/${a.id}`, {
+          headers: { Authorization: `Bearer ${getToken()}` },
+        });
+        if (res.ok) {
+          const url = URL.createObjectURL(await res.blob());
+          setThumbs((t) => ({ ...t, [a.id]: url }));
+        }
+      }
+    }
+  };
+  useEffect(() => {
+    load();
+    return () => Object.values(thumbs).forEach(URL.revokeObjectURL);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [txn.id]);
+
+  const add = async (file: File) => {
+    setBusy(true);
+    try {
+      await api.upload(`/api/attachments/bank_transactions/${txn.id}`, file);
+      // Auto-fill the receipt ref from the filename when empty.
+      if (!receipt) setReceipt(file.name.replace(/\.[a-z]+$/i, ""));
+      load();
+    } finally { setBusy(false); }
+  };
+
+  return (
+    <Modal title="Receipt & attachments" onClose={() => {
+      onChanged(receipt !== txn.receipt_ref ? receipt : undefined);
+      onClose();
+    }}>
+      <p className="mb-3 text-sm text-ink-2">
+        {txn.date} · {txn.description} · <strong>{money(txn.debit || txn.credit)}</strong>
+      </p>
+      <Field label="Receipt # (searchable from the list)">
+        <Input value={receipt} placeholder="e.g. R-0042 or photo name"
+          onChange={(e) => setReceipt(e.target.value)} />
+      </Field>
+      <div className="mt-3 flex gap-2">
+        <Button variant="outline" onClick={() => camRef.current?.click()} disabled={busy}>
+          {busy ? <Loader2 size={15} className="animate-spin" /> : <Camera size={15} />} Take photo
+        </Button>
+        <Button variant="outline" onClick={() => fileRef.current?.click()} disabled={busy}>
+          <Upload size={15} /> Choose file
+        </Button>
+        <input ref={camRef} type="file" accept="image/*" capture="environment" hidden
+          onChange={(e) => e.target.files?.[0] && add(e.target.files[0])} />
+        <input ref={fileRef} type="file" accept="image/*,.pdf" hidden
+          onChange={(e) => e.target.files?.[0] && add(e.target.files[0])} />
+      </div>
+      {items.length > 0 && (
+        <div className="mt-4 grid grid-cols-3 gap-2">
+          {items.map((a) => (
+            <div key={a.id} className="group relative overflow-hidden rounded-xl border border-line">
+              {a.mime.startsWith("image/") && thumbs[a.id] ? (
+                <img src={thumbs[a.id]} alt={a.filename}
+                  className="h-24 w-full object-cover" />
+              ) : a.mime.startsWith("image/") ? (
+                <div className="grid h-24 place-items-center bg-surface-2 text-xs text-ink-3">
+                  <Loader2 size={14} className="animate-spin" />
+                </div>
+              ) : (
+                <div className="grid h-24 place-items-center bg-surface-2 text-xs text-ink-3">PDF</div>
+              )}
+              <p className="truncate px-2 py-1 text-[11px] text-ink-3">{a.filename}</p>
+              <button
+                className="absolute right-1 top-1 hidden rounded-lg bg-black/60 p-1 text-white group-hover:block"
+                onClick={async () => {
+                  await api.del(`/api/attachments/${a.id}`); load();
+                }} title="Delete">
+                <Trash2 size={12} />
+              </button>
+            </div>
+          ))}
+        </div>
+      )}
+      <p className="mt-3 text-xs text-ink-3">
+        Photos/PDFs stay on this machine (~/.oilforge/attachments). CRA
+        accepts digital copies — keep them 6+ years.
+      </p>
+    </Modal>
   );
 }
 

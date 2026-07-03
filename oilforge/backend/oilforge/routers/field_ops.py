@@ -17,8 +17,10 @@ from ..auth import current_user
 from ..config import DATA_DIR
 from ..db import get_db
 from ..helpers import fiscal_period, get_setting, parse_period
-from ..models import (Attachment, AuditLog, Client, Equipment, Expense, Part,
-                      SafetyItem, Shareholder, User)
+from ..classifier import classify, seed_default_rules, status_for
+from ..models import (Attachment, AuditLog, BankTransaction, ClassifierRule,
+                      Client, DividendDeclaration, Equipment, Expense, Job,
+                      Part, SafetyItem, Shareholder, ShareholderTxn, User)
 from ..reports import gst_detail, statements, t2
 from ..reports.pdf import financial_summary_pdf
 from ..shareholder import dividends_by_kind, journal_entries
@@ -130,6 +132,23 @@ IMPORT_TEMPLATES = {
                  "receipt_ref"],
     "clients": ["name", "contact", "email", "phone", "address", "gst_number"],
     "equipment": ["name", "serial", "cca_class", "cost", "acquired"],
+    # Migration-wizard kinds (historical data from the old Streamlit app,
+    # spreadsheets, or any prior system):
+    "bank_transactions": ["date", "description", "debit", "credit",
+                          "category", "receipt_ref"],
+    "jobs": ["number", "title", "client_name", "rate_type", "day_rate",
+             "hourly_rate", "holdback_pct", "status", "start_date"],
+    "shareholder_history": ["date", "shareholder_name", "type", "amount",
+                            "memo"],
+    "dividends": ["date", "shareholder_name", "amount", "kind",
+                  "settlement", "resolution_ref"],
+}
+
+TEMPLATE_EXAMPLES = {
+    "bank_transactions": "2024-03-05,UFA CARDLOCK NISKU,412.88,,Fuel & Petroleum,R-101",
+    "jobs": "WO-H001,Completions support,Prairie Energy Resources,day_rate,2400,0,10,closed,2024-02-01",
+    "shareholder_history": "2024-01-15,J. Smith,withdrawal,5000,Opening-year draw (use type 'contribution' with a negative-history note for opening credit balances)",
+    "dividends": "2024-12-31,J. Smith,45000,non_eligible,loan,RES-2024-01",
 }
 
 
@@ -138,10 +157,25 @@ def import_template(kind: str, user: User = Depends(current_user)):
     if kind not in IMPORT_TEMPLATES:
         raise HTTPException(404, f"No template for {kind!r}. "
                                  f"Available: {list(IMPORT_TEMPLATES)}")
-    return Response(",".join(IMPORT_TEMPLATES[kind]) + "\n",
+    body = ",".join(IMPORT_TEMPLATES[kind]) + "\n"
+    if kind in TEMPLATE_EXAMPLES:
+        body += TEMPLATE_EXAMPLES[kind] + "\n"
+    return Response(body,
                     media_type="text/csv", headers={
                         "Content-Disposition":
                         f'attachment; filename="oilforge_{kind}_template.csv"'})
+
+
+def _holder_by_name(db: Session, name: str):
+    """Find or create a shareholder for migration rows."""
+    name = name.strip()
+    holder = (db.query(Shareholder).filter(Shareholder.name == name)
+              .order_by(Shareholder.id).first())
+    if holder is None:
+        holder = Shareholder(name=name)
+        db.add(holder)
+        db.flush()
+    return holder
 
 
 @router.post("/import/{kind}")
@@ -175,6 +209,65 @@ async def import_csv(kind: str, file: UploadFile,
                     cost=float(row.get("cost", 0) or 0),
                     acquired=date.fromisoformat(row["acquired"])
                     if row.get("acquired") else None))
+            elif kind == "bank_transactions":
+                d = date.fromisoformat(row["date"].strip())
+                debit = float(row.get("debit") or 0)
+                credit = float(row.get("credit") or 0)
+                desc = row.get("description", "").strip()
+                if db.query(BankTransaction).filter_by(
+                        date=d, description=desc, debit=debit,
+                        credit=credit).first():
+                    continue  # idempotent, like the main bank import
+                seed_default_rules(db)
+                category = (row.get("category", "").strip()
+                            or classify(desc, db.query(ClassifierRule)
+                                        .order_by(ClassifierRule.priority).all()))
+                status = status_for(category)
+                rules = rules_for_year(db, d.year)
+                itc = (cra.calc_itc(debit, category, rules)
+                       if status == "business" and debit > 0 else 0.0)
+                db.add(BankTransaction(
+                    date=d, description=desc, debit=debit, credit=credit,
+                    category=category, status=status, itc=itc,
+                    receipt_ref=row.get("receipt_ref", ""),
+                    source_file=f"migration:{file.filename}"))
+            elif kind == "jobs":
+                client = (db.query(Client)
+                          .filter(Client.name == row["client_name"].strip())
+                          .first())
+                if client is None:
+                    client = Client(name=row["client_name"].strip())
+                    db.add(client)
+                    db.flush()
+                db.add(Job(
+                    number=row["number"].strip(),
+                    title=row.get("title", ""), client_id=client.id,
+                    rate_type=row.get("rate_type", "day_rate") or "day_rate",
+                    day_rate=float(row.get("day_rate") or 0),
+                    hourly_rate=float(row.get("hourly_rate") or 0),
+                    holdback_pct=float(row.get("holdback_pct") or 0),
+                    status=row.get("status", "closed") or "closed",
+                    start_date=date.fromisoformat(row["start_date"])
+                    if row.get("start_date") else None))
+            elif kind == "shareholder_history":
+                holder = _holder_by_name(db, row["shareholder_name"])
+                txn_type = row.get("type", "withdrawal").strip()
+                if cra.loan_direction(txn_type) == 0:
+                    raise ValueError(f"unknown type {txn_type!r}")
+                db.add(ShareholderTxn(
+                    shareholder_id=holder.id,
+                    date=date.fromisoformat(row["date"].strip()),
+                    type=txn_type, amount=float(row["amount"]),
+                    memo=row.get("memo", "")))
+            elif kind == "dividends":
+                holder = _holder_by_name(db, row["shareholder_name"])
+                db.add(DividendDeclaration(
+                    shareholder_id=holder.id,
+                    date=date.fromisoformat(row["date"].strip()),
+                    amount=float(row["amount"]),
+                    kind=row.get("kind", "non_eligible") or "non_eligible",
+                    settlement=row.get("settlement", "loan") or "loan",
+                    resolution_ref=row.get("resolution_ref", "")))
             created += 1
         except (KeyError, ValueError) as e:
             errors.append({"row": i, "error": str(e)})

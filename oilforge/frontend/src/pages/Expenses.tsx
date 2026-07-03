@@ -18,11 +18,31 @@ const CATEGORIES = [
   "Other Operating",
 ];
 
+/** Common oilfield purchases — one tap prefills the quick-entry form
+ * with the right category (and CRA treatment). */
+const QUICK_PICKS = [
+  { label: "⛽ Cardlock fuel", hint: "100% ITC",
+    values: { category: "Fuel & Petroleum", vendor: "UFA Cardlock" } },
+  { label: "🦺 PPE / FR gear", hint: "100% deductible",
+    values: { category: "Safety Gear & PPE", vendor: "Hazmasters" } },
+  { label: "🔧 Parts", hint: "expense (≥$2,500 → consider CCA asset)",
+    values: { category: "Equipment Repairs & Parts", vendor: "NAPA" } },
+  { label: "🛠 Small tool <$500", hint: "class 12 — 100% write-off",
+    values: { category: "Small Tools (<$500)" } },
+  { label: "🏕 Camp / lodging", hint: "remote site — 100%",
+    values: { category: "Camp & Accommodation" } },
+  { label: "🍔 Crew meal", hint: "50% deductible, 50% ITC",
+    values: { category: "Meals (50%)" } },
+  { label: "🎓 Tickets / training", hint: "H2S, First Aid, CSTS",
+    values: { category: "Training & Certifications", vendor: "Energy Safety Canada" } },
+];
+
 export default function Expenses() {
   const [jobs, setJobs] = useState<any[]>([]);
   const [equipment, setEquipment] = useState<any[]>([]);
   const [importMsg, setImportMsg] = useState("");
   const [reloadKey, setReloadKey] = useState(0);
+  const [prefill, setPrefill] = useState<Record<string, any> | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
   useEffect(() => {
     api.get("/api/jobs").then((r) => setJobs(r.items));
@@ -50,6 +70,17 @@ export default function Expenses() {
 
   return (
     <div>
+      <div className="mb-3 flex flex-wrap items-center gap-1.5">
+        <span className="mr-1 text-xs font-medium text-ink-3">Quick picks:</span>
+        {QUICK_PICKS.map((p) => (
+          <button key={p.label}
+            className="rounded-full border border-line bg-surface-1 px-3 py-1 text-xs text-ink-2 hover:border-accent hover:text-accent"
+            title={p.hint}
+            onClick={() => setPrefill({ ...p.values, _ts: Date.now() })}>
+            {p.label}
+          </button>
+        ))}
+      </div>
       <div className="mb-3 flex flex-wrap items-center gap-2">
         <Button variant="outline" onClick={() =>
           api.download("/api/expenses/import-template", "oilforge_expenses_template.csv")}>
@@ -69,7 +100,7 @@ export default function Expenses() {
           }} />
         {importMsg && <span className="text-sm text-good">{importMsg}</span>}
       </div>
-      <CrudPage key={reloadKey} title="Expenses"
+      <CrudPage key={reloadKey} prefill={prefill} title="Expenses"
       sub="ITCs computed from the year's rules — tag a job for per-contract costing"
       path="/api/expenses" fields={fields}
       transform={(f) => ({

@@ -337,6 +337,22 @@ def yearend_zip(start: str | None = None, end: str | None = None,
         for c in checklist:
             lines.append(f"[{'x' if c['ok'] else ' '}] {c['item']}")
         z.writestr("10_tax_optimization_summary.md", "\n".join(lines))
+        # T2 schedule previews + accountant-software-friendly exports.
+        from ..reports import t2 as t2mod
+        gifi = t2mod.schedule125_gifi(db, s, e)
+        z.writestr("11_gifi_s125.csv", csv_bytes(
+            ["GIFI", "Description", "Amount"],
+            [[l["gifi"], l["description"], l["amount"]] for l in gifi["lines"]]))
+        # Per-leg general-ledger format: imports cleanly into QuickBooks,
+        # CaseWare, Sage or Excel pivot tables (one debit/credit per row).
+        gl_rows = []
+        for j in sh.journal_entries(db, s, e):
+            gl_rows.append([j["date"], j["debit_account"], j["amount"], "",
+                            j["memo"]])
+            gl_rows.append([j["date"], j["credit_account"], "", j["amount"],
+                            j["memo"]])
+        z.writestr("12_general_ledger_quickbooks.csv", csv_bytes(
+            ["Date", "Account", "Debit", "Credit", "Memo"], gl_rows))
 
     log(db, user.email, "export", "yearend", year, {"files": 10})
     db.commit()

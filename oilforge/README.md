@@ -19,6 +19,22 @@ First launch creates your local account. Data lives in `~/.oilforge/`
 (override with `OILFORGE_DATA_DIR`, or set
 `DATABASE_URL=postgresql+psycopg://…` for PostgreSQL).
 
+## Getting started (first 30 minutes)
+
+1. **Install & run**: `pip install -r backend/requirements.txt` then
+   `python run.py` → create your local account.
+2. **Settings**: corporation name, province, fiscal year-end, GST number.
+3. **Migrate history** (Settings → *Migration wizard*): work the seven
+   steps top-to-bottom — clients, equipment, jobs, prior-year bank
+   statements, expenses, shareholder loan history (opening balance =
+   your first rows), past dividends. Each step has a downloadable CSV
+   template with an example row; imports are additive and duplicate-safe.
+4. **Upload this year's CIBC files** (Bank Import) — see the workflow below.
+5. **Month to month**: field tickets on the Field Entry page (photos
+   attach from the truck), invoices from jobs, ⇄ draws to the ledger.
+6. **Year-end**: Tax Optimizer → clear the findings → Reports →
+   *Year-end close* → download the accountant ZIP.
+
 ## The yearly CIBC workflow (start here)
 
 1. **Export the year from CIBC online banking** — chequing and credit card,
@@ -173,9 +189,15 @@ cd frontend && npm run build                                   # ship UI
 - **Encrypted backups** (PBKDF2 + Fernet) via a password on export.
 - Attachments are type- and size-restricted (photos/PDF, 15 MB).
 - Append-only audit log with **CSV export** for the reviewer.
-- Full-database encryption at rest: keep `~/.oilforge` on an encrypted
-  volume (FileVault/BitLocker/LUKS) — SQLCipher can be swapped in via
-  `DATABASE_URL` if needed.
+- Encrypted backups use a **per-file random salt** (600k PBKDF2
+  iterations); older fixed-salt backups still restore.
+- Full-database encryption at rest, pick one:
+  1. *Simplest*: keep `~/.oilforge` on an encrypted volume
+     (FileVault / BitLocker / LUKS). Zero code changes.
+  2. *SQLCipher*: `pip install sqlcipher3-binary sqlalchemy-sqlcipher`,
+     then `DATABASE_URL="sqlite+pysqlcipher://:YOURKEY@/$HOME/.oilforge/oilforge.db"` —
+     the app is dialect-agnostic, everything goes through SQLAlchemy.
+  3. *PostgreSQL* with server-side disk encryption via `DATABASE_URL`.
 
 ## Packaging
 

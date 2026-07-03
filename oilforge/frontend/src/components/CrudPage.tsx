@@ -85,12 +85,15 @@ export function EntityForm({ fields, value, onChange }: {
 }
 
 export default function CrudPage({ title, sub, path, fields, columns,
-  dateFiltered = true, footer, transform }: {
+  dateFiltered = true, footer, transform, prefill }: {
   title: string; sub?: string; path: string;
   fields: FieldDef[]; columns: ColumnDef[];
   dateFiltered?: boolean;
   footer?: (items: any[]) => ReactNode;
   transform?: (form: Record<string, any>) => Record<string, any>;
+  /** Quick-pick templates: merged into the entry form when set (include a
+   * changing key like _ts to re-trigger). */
+  prefill?: Record<string, any> | null;
 }) {
   const { period } = useStore();
   const [items, setItems] = useState<any[]>([]);
@@ -114,6 +117,13 @@ export default function CrudPage({ title, sub, path, fields, columns,
   }, [path, query]);
 
   useEffect(() => { load(); }, [load]);
+
+  useEffect(() => {
+    if (prefill) {
+      const { _ts, ...values } = prefill;
+      setForm((f) => ({ ...f, ...values }));
+    }
+  }, [prefill]);
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
